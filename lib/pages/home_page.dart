@@ -18,6 +18,33 @@ class _HomePageState extends State<HomePage> {
 
   List<dynamic> favouriteStocks = [];
 
+  // void logOut() async {
+  //   const url = "${constants.baseUrl}/logout";
+
+  //   try {
+  //     final dio = Dio();
+
+  //     final body = {"user_id": 1};
+
+  //     final response = await dio.post(
+  //       url,
+  //       data: body,
+  //       options: Options(
+  //         followRedirects: false,
+  //         validateStatus: (status) {
+  //           return status! <= 500;
+  //         },
+  //       ),
+  //     );
+
+  // navigate to signin page
+
+  //     print(response);
+  //   } catch (e) {
+  //     print(e);
+  //   }
+  // }
+
   void getFavStocks() async {
     const url = "${constants.baseUrl}/stocks/favourites";
 
@@ -28,6 +55,10 @@ class _HomePageState extends State<HomePage> {
         url,
         options: Options(
           headers: {'user_id': 1},
+          followRedirects: false,
+          validateStatus: (status) {
+            return status! <= 500;
+          },
         ),
       );
 
@@ -50,6 +81,10 @@ class _HomePageState extends State<HomePage> {
         url,
         options: Options(
           headers: {'user_id': 1},
+          followRedirects: false,
+          validateStatus: (status) {
+            return status! <= 500;
+          },
         ),
       );
 
@@ -71,11 +106,20 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.primary,
       appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.primary,
         title: Text(
           "Stockify",
           style: Theme.of(context).textTheme.displayLarge,
         ),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        actions: [
+          IconButton(
+            onPressed: () => Navigator.popAndPushNamed(context, "/register"),
+            icon: const Icon(
+              Icons.logout,
+              color: Colors.white,
+            ),
+          )
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -91,7 +135,7 @@ class _HomePageState extends State<HomePage> {
                 width: MediaQuery.of(context).size.width,
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.secondary,
-                  borderRadius: const BorderRadius.all(Radius.circular(5)),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
@@ -158,27 +202,27 @@ class _HomePageState extends State<HomePage> {
                       },
                     )
                   : SizedBox(
-                    height: MediaQuery.of(context).size.height,
-                    width: MediaQuery.of(context).size.width,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Nothing here",
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        Text(
-                          "Use the search bar to add stocks to",
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        Text(
-                          "your favourites' list",
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ],
+                      height: MediaQuery.of(context).size.height,
+                      width: MediaQuery.of(context).size.width,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Nothing here",
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          Text(
+                            "Use the search bar to add stocks to",
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          Text(
+                            "your favourites' list",
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
             ),
           ],
         ),

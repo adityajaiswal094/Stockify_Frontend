@@ -3,7 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
-import 'package:fl_chart/fl_chart.dart';
+import 'package:stockify/components/custom_button.dart';
+import 'package:stockify/components/custom_line_chart.dart';
 
 import '../utils/constants.dart' as constants;
 
@@ -40,7 +41,14 @@ class _StockPageState extends State<StockPage> {
       };
 
       try {
-        var response = await dio.get(url, data: body);
+        var response = await dio.get(url,
+            data: body,
+            options: Options(
+              followRedirects: false,
+              validateStatus: (status) {
+                return status! <= 500;
+              },
+            ));
 
         var data = await response.data;
 
@@ -59,33 +67,15 @@ class _StockPageState extends State<StockPage> {
             if (minX == null || date.isBefore(minX!)) minX = date;
             if (maxX == null || date.isAfter(maxX!)) maxX = date;
           }
-
-          // print('minY: $minY');
-          // print('maxY: $maxY');
-          // print('minX: $minX');
-          // print('maxX: $maxX');
         });
+
+        // stockHistoryDetails['data'].asMap().forEach(
+        //       (index, ele) =>
+        //           print("Index: $index, Close Value: ${ele['close']}"),
+        //     );
       } catch (e) {
         print(e);
       }
-    }
-
-    List<FlSpot> flSpots = [];
-
-    if (stockHistoryDetails.isNotEmpty &&
-        stockHistoryDetails.containsKey('data')) {
-      flSpots = stockHistoryDetails['data'].map<FlSpot>((e) {
-        // Assuming e.date is a DateTime object
-        // Convert the date to a formatted string, then parse it to a double
-        DateTime date =
-            DateTime.parse(e['date']); // Parse the string to a DateTime object
-        double xValue = double.parse(DateFormat('yyyyMMdd').format(date));
-
-        // Assuming e.close is the closing value of the stock
-        double yValue = double.parse(e['close'].toString());
-
-        return FlSpot(xValue, yValue);
-      }).toList();
     }
 
     return Scaffold(
@@ -109,13 +99,9 @@ class _StockPageState extends State<StockPage> {
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            //
-            const SizedBox(
-              height: 50,
-            ),
-
             //
             Text("Stock Price History Graph",
                 style: Theme.of(context).textTheme.bodyMedium),
@@ -141,7 +127,6 @@ class _StockPageState extends State<StockPage> {
                     Text(
                       startDate == "" ? "" : startDate,
                       style: Theme.of(context).textTheme.bodyMedium,
-
                     ),
                   ],
                 ),
@@ -164,7 +149,8 @@ class _StockPageState extends State<StockPage> {
 
                     // return;
                   },
-                  icon: const Icon(Icons.date_range_outlined, color: Colors.white),
+                  icon: const Icon(Icons.date_range_outlined,
+                      color: Colors.white),
                 ),
               ],
             ),
@@ -179,7 +165,6 @@ class _StockPageState extends State<StockPage> {
                     Text(
                       "End Date:",
                       style: Theme.of(context).textTheme.bodyMedium,
-
                     ),
 
                     //
@@ -212,73 +197,54 @@ class _StockPageState extends State<StockPage> {
                       });
                     }
                   },
-                  icon: const Icon(Icons.date_range_outlined, color: Colors.white),
+                  icon: const Icon(Icons.date_range_outlined,
+                      color: Colors.white),
                 ),
               ],
             ),
 
             // Generate Button
-            ElevatedButton(
-              onPressed:
-                  startDate != "" && endDate != "" ? getStockHistory : null,
-              child: const Text('Generate Graph'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                CustomButton(
+                  onPressed: () {
+                    if (startDate != "" && endDate != "") {
+                      getStockHistory();
+                    }
+                  },
+                  buttonText: 'Generate Graph',
+                  height: MediaQuery.of(context).size.width / 8,
+                  width: MediaQuery.of(context).size.width / 2.2,
+                ),
+
+                //
+                CustomButton(
+                  onPressed: () {
+                    setState(() {
+                      stockHistoryDetails = {};
+                      startDate = "";
+                      endDate = "";
+                    });
+                  },
+                  buttonText: 'Clear Graph',
+                  height: MediaQuery.of(context).size.width / 8,
+                  width: MediaQuery.of(context).size.width / 2.7,
+                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                ),
+              ],
             ),
 
             // Graph
-            stockHistoryDetails.isNotEmpty
-                ? AspectRatio(
-                    aspectRatio: 1,
-                    child: LineChart(
-                      LineChartData(
-                        minX: 0,
-                        maxX: stockHistoryDetails.length - 1,
-                        minY: minY,
-                        maxY: maxY,
-                        lineBarsData: [
-                          LineChartBarData(
-                            spots: flSpots,
-                            color: Colors.blue,
-                            isCurved: true,
-                            barWidth: 6,
-                          ),
-                        ],
-                        titlesData: const FlTitlesData(
-                          show: true,
-                          topTitles: AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          rightTitles: AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          leftTitles: AxisTitles(
-                            axisNameWidget: Text('Y-axis'),
-                            sideTitles: SideTitles(
-                              reservedSize: 40,
-                              showTitles: true,
-                            ),
-                          ),
-                          bottomTitles: AxisTitles(
-                            axisNameWidget: Text('X-axis'),
-                            sideTitles: SideTitles(
-                              reservedSize: 6,
-                              showTitles: true,
-                            ),
-                          ),
-                        ),
-                        gridData: FlGridData(
-                          show: true,
-                          drawHorizontalLine: true,
-                          getDrawingHorizontalLine: (value) => const FlLine(
-                            color: Colors.amber,
-                            strokeWidth: 0.5,
-                          ),
-                        ),
-                      ),
-                      duration: const Duration(milliseconds: 150),
-                      curve: Curves.linear,
-                    ),
-                  )
-                : const SizedBox(),
+            Container(
+                margin: const EdgeInsets.only(top: 50.0),
+                child: stockHistoryDetails.isNotEmpty &&
+                        startDate.isNotEmpty &&
+                        endDate.isNotEmpty
+                    ? CustomLineChart(stockData: stockHistoryDetails['data'])
+                    : const SizedBox(
+                        child: AspectRatio(aspectRatio: 16 / 9),
+                      )),
           ],
         ),
       ),

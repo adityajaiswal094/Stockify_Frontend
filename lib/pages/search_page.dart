@@ -34,7 +34,13 @@ class _SearchPageState extends State<SearchPage> {
     try {
       final dio = Dio();
 
-      final response = await dio.get(url);
+      final response = await dio.get(url,
+          options: Options(
+            followRedirects: false,
+            validateStatus: (status) {
+              return status! <= 500;
+            },
+          ));
 
       setState(() {
         stocksList = response.data;

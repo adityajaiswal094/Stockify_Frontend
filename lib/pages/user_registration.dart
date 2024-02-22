@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:stockify/components/custom_button.dart';
 import 'package:stockify/components/custom_textformfield.dart';
+import 'package:stockify/utils/helper.dart';
+import '../utils/constants.dart' as constants;
+import 'package:dio/dio.dart';
 
 class UserRegistration extends StatefulWidget {
   const UserRegistration({super.key});
@@ -9,7 +13,6 @@ class UserRegistration extends StatefulWidget {
 }
 
 class _UserRegistrationState extends State<UserRegistration> {
-  TextEditingController userNameController = TextEditingController();
   TextEditingController firstNameController = TextEditingController();
   TextEditingController lastNameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
@@ -18,6 +21,56 @@ class _UserRegistrationState extends State<UserRegistration> {
 
   final _formKey = GlobalKey<FormState>();
 
+  void signUp() async {
+    if (_formKey.currentState!.validate()) {
+      // check if passwords match
+      if (passwordController.text == confirmPasswordController.text) {
+        // if passwords match then make api call
+        try {
+          const url = "${constants.baseUrl}/register";
+
+          final body = {
+            "first_name": firstNameController.text,
+            "last_name": lastNameController.text,
+            "email_id": emailController.text,
+            "password": passwordController.text
+          };
+
+          final dio = Dio();
+
+          final response = await dio.post(url,
+              data: body,
+              options: Options(
+                followRedirects: false,
+                validateStatus: (status) {
+                  return status! <= 500;
+                },
+              ));
+
+          Map<String, dynamic> responseBody = response.data;
+
+          if (context.mounted) {
+            if (response.statusCode == 201) {
+              Navigator.popAndPushNamed(context, "/signin");
+              // ScaffoldMessenger.of(context).showSnackBar(
+              //   SnackBar(
+              //     content: Text(responseBody['title']),
+              //   ),
+              // );
+            } else {
+              showDialogMessage(
+                  context, responseBody['title'], responseBody['message']);
+            }
+          }
+        } catch (e) {
+          print(e);
+        }
+      } else {
+        showDialogMessage(context, "Error", "Passwords Don't Match");
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -25,72 +78,94 @@ class _UserRegistrationState extends State<UserRegistration> {
         backgroundColor: Theme.of(context).colorScheme.primary,
         body: Center(
           child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CustomTextFormField(
-                      controller: userNameController,
-                      hintText: "Enter username",
-                    ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 25.0, right: 25.0),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CustomTextFormField(
+                          controller: firstNameController,
+                          hintText: "Enter first name",
+                          validationFunc: () {},
+                        ),
 
-                    //
-                    CustomTextFormField(
-                      controller: firstNameController,
-                      hintText: "Enter first name",
-                    ),
+                        //
+                        CustomTextFormField(
+                          controller: lastNameController,
+                          hintText: "Enter last name",
+                          validationFunc: () {},
+                        ),
 
-                    //
-                    CustomTextFormField(
-                      controller: lastNameController,
-                      hintText: "Enter last name",
-                    ),
+                        //
+                        CustomTextFormField(
+                          controller: emailController,
+                          hintText: "Enter email",
+                          keyboardType: TextInputType.emailAddress,
+                          validationFunc: () {},
+                        ),
 
-                    //
-                    CustomTextFormField(
-                      controller: emailController,
-                      hintText: "Enter email",
-                      keyboardType: TextInputType.emailAddress,
-                    ),
+                        //
+                        CustomTextFormField(
+                          controller: passwordController,
+                          hintText: "Enter password",
+                          obscureText: true,
+                          validationFunc: () {},
+                        ),
 
-                    //
-                    CustomTextFormField(
-                      controller: passwordController,
-                      hintText: "Enter password",
-                      obscureText: true,
-                    ),
+                        //
+                        CustomTextFormField(
+                          controller: confirmPasswordController,
+                          hintText: "Re-enter password",
+                          obscureText: true,
+                          validationFunc: () {},
+                        ),
 
-                    //
-                    CustomTextFormField(
-                      controller: confirmPasswordController,
-                      hintText: "Re-enter password",
-                      obscureText: true,
-                    ),
+                        //
+                        CustomButton(
+                          buttonText: "Sign Up",
+                          onPressed: signUp,
+                          height: MediaQuery.of(context).size.width / 6,
+                          width: MediaQuery.of(context).size.width,
+                        ),
 
-                    //
-                    ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          // If the form is valid, display a snackbar. In the real world,
-                          // you'd often call a server or save the information in a database.
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Processing Data')),
-                          );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            Theme.of(context).colorScheme.onSecondary,
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const Text("Submit"),
+                        //
+                        const SizedBox(
+                          height: 25,
+                        ),
+
+                        //
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text("Have an account? ",
+                                style: Theme.of(context).textTheme.bodyMedium),
+                            GestureDetector(
+                              onTap: () =>
+                                  Navigator.popAndPushNamed(context, "/signin"),
+                              child: Text(
+                                "Sign In",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleSmall!
+                                    .copyWith(
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: Theme.of(context)
+                                            .colorScheme
+                                            .onSecondary),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ),

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:stockify/pages/home_page.dart';
 import 'package:stockify/pages/search_page.dart';
 import 'package:stockify/pages/stock_page.dart';
+import 'package:stockify/pages/user_login.dart';
 import 'package:stockify/pages/user_registration.dart';
 
 void main() {
@@ -32,8 +33,13 @@ class MyApp extends StatelessWidget {
           titleLarge: TextStyle(color: Colors.white, fontSize: 24),
           titleMedium: TextStyle(
               color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+          titleSmall: TextStyle(
+              color: Color.fromARGB(255, 0, 126, 253),
+              fontSize: 18,
+              fontWeight: FontWeight.bold),
           bodyMedium: TextStyle(color: Colors.white, fontSize: 18),
           bodySmall: TextStyle(color: Colors.white, fontSize: 14),
+          labelSmall: TextStyle(color: Colors.white, fontSize: 10),
         ),
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.black,
@@ -44,11 +50,13 @@ class MyApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const UserRegistration(),
+      home: const HomePage(),
       routes: {
         "/homepage": (context) => const HomePage(),
         "/stockpage": (context) => const StockPage(),
         "/searchpage": (context) => const SearchPage(),
+        "/register": (context) => const UserRegistration(),
+        "/signin": (context) => const UserLogin(),
       },
     );
   }

@@ -26,6 +26,10 @@ class _StockTileState extends State<StockTile> {
         url,
         options: Options(
           headers: {"user_id": 1},
+          followRedirects: false,
+          validateStatus: (status) {
+            return status! <= 500;
+          },
         ),
       );
     } on DioException catch (e) {
@@ -58,7 +62,10 @@ class _StockTileState extends State<StockTile> {
                     }
                   : null,
               icon: addedToFavourite == true
-                  ? Icon(Icons.check_box, color: Theme.of(context).colorScheme.onPrimary,)
+                  ? Icon(
+                      Icons.check_box,
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    )
                   : Icon(
                       Icons.add_box_outlined,
                       color: Theme.of(context).colorScheme.onPrimary,

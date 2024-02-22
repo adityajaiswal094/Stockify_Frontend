@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
-class CustomTextFormField extends StatefulWidget {
+class CustomTextFormField extends StatelessWidget {
   final TextEditingController controller;
   final String hintText;
   final TextInputType? keyboardType;
   final bool? obscureText;
+  final Function validationFunc;
 
   const CustomTextFormField({
     super.key,
@@ -12,28 +13,25 @@ class CustomTextFormField extends StatefulWidget {
     required this.hintText,
     this.keyboardType,
     this.obscureText,
+    required this.validationFunc,
   });
 
-  @override
-  State<CustomTextFormField> createState() => _CustomTextFormFieldState();
-}
-
-class _CustomTextFormFieldState extends State<CustomTextFormField> {
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         TextFormField(
-          controller: widget.controller,
+          controller: controller,
           cursorColor: Theme.of(context).colorScheme.onPrimary,
-          keyboardType: widget.keyboardType ?? TextInputType.name,
-          obscureText: widget.obscureText ?? false,
+          keyboardType: keyboardType ?? TextInputType.name,
+          obscureText: obscureText ?? false,
           decoration: InputDecoration(
             border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
               borderSide:
                   BorderSide(color: Theme.of(context).colorScheme.secondary),
             ),
-            hintText: widget.hintText,
+            hintText: hintText,
             hintStyle: Theme.of(context).textTheme.bodySmall,
             fillColor: Theme.of(context).colorScheme.secondary,
             filled: true,
