@@ -147,9 +147,9 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             onPressed: () async {
               final sharedPreferences = await SharedPreferences.getInstance();
-              final userIdKey = sharedPreferences.getInt('userId');
-              signOut(userIdKey!);
-              sharedPreferences.clear();
+              // final userIdKey = sharedPreferences.getInt('userId');
+              signOut(userId);
+              await sharedPreferences.clear();
             },
             icon: const Icon(
               Icons.logout,
