@@ -1,7 +1,10 @@
-// ignore_for_file: avoid_print, non_constant_identifier_names
+// ignore_for_file: avoid_print
 
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:stockify/store/store.dart';
+import 'package:stockify/store/user_reducer.dart';
+import 'package:stockify/utils/helper.dart';
 
 import '../utils/constants.dart' as constants;
 
@@ -16,45 +19,23 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController searchTextController = TextEditingController();
   final SearchController searchController = SearchController();
 
+  final userId = store.state.user['user_id'];
+  // final favouriteStocks = store.state.favouriteStocks;
+
   List<dynamic> favouriteStocks = [];
 
-  // void logOut() async {
-  //   const url = "${constants.baseUrl}/logout";
-
-  //   try {
-  //     final dio = Dio();
-
-  //     final body = {"user_id": 1};
-
-  //     final response = await dio.post(
-  //       url,
-  //       data: body,
-  //       options: Options(
-  //         followRedirects: false,
-  //         validateStatus: (status) {
-  //           return status! <= 500;
-  //         },
-  //       ),
-  //     );
-
-  // navigate to signin page
-
-  //     print(response);
-  //   } catch (e) {
-  //     print(e);
-  //   }
-  // }
-
-  void getFavStocks() async {
+  Future<void> getFavStocks() async {
     const url = "${constants.baseUrl}/stocks/favourites";
 
+    store.dispatch(
+        const LoadingAction(payload: {"isError": false, "isLoading": true}));
     try {
       final dio = Dio();
 
       final response = await dio.get(
         url,
         options: Options(
-          headers: {'user_id': 1},
+          headers: {'user_id': userId},
           followRedirects: false,
           validateStatus: (status) {
             return status! <= 500;
@@ -64,23 +45,33 @@ class _HomePageState extends State<HomePage> {
 
       final responseData = await response.data as List;
 
-      setState(() {
-        favouriteStocks = responseData;
-      });
+      if (context.mounted) {
+        store.dispatch(StoreFavouriteStocks(payload: responseData));
+        setState(() {
+          favouriteStocks = responseData;
+        });
+
+        store.dispatch(const LoadingAction(
+            payload: {"isError": false, "isLoading": false}));
+      }
+
+      //
     } catch (e) {
+      store.dispatch(
+          const ErrorAction(payload: {"isError": true, "isLoading": false}));
       print(e);
     }
   }
 
-  void removeFromFavourite(String sc_code) async {
-    final url = "${constants.baseUrl}/stocks/favourite/$sc_code";
+  Future<void> removeFromFavourite(String scCode) async {
+    final url = "${constants.baseUrl}/stocks/favourite/$scCode";
     final dio = Dio();
 
     try {
       await dio.delete(
         url,
         options: Options(
-          headers: {'user_id': 1},
+          headers: {'user_id': userId},
           followRedirects: false,
           validateStatus: (status) {
             return status! <= 500;
@@ -89,6 +80,43 @@ class _HomePageState extends State<HomePage> {
       );
 
       getFavStocks();
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  Future<void> signOut(int userId) async {
+    const url = "${constants.baseUrl}/logout";
+
+    try {
+      final dio = Dio();
+
+      final body = {"user_id": userId};
+
+      final response = await dio.post(
+        url,
+        data: body,
+        options: Options(
+          followRedirects: false,
+          validateStatus: (status) {
+            return status! <= 500;
+          },
+        ),
+      );
+
+      var responseBody = await response.data;
+
+      // navigate to signin page
+      if (context.mounted) {
+        if (response.statusCode == 200) {
+          store.dispatch(UserLoggedOutAction());
+          Navigator.pushNamedAndRemoveUntil(
+              context, "/signin", ((Route<dynamic> route) => false));
+        } else {
+          showDialogMessage(
+              context, responseBody['title'], responseBody['message']);
+        }
+      }
     } catch (e) {
       print(e);
     }
@@ -113,7 +141,7 @@ class _HomePageState extends State<HomePage> {
         ),
         actions: [
           IconButton(
-            onPressed: () => Navigator.popAndPushNamed(context, "/register"),
+            onPressed: () => signOut(userId),
             icon: const Icon(
               Icons.logout,
               color: Colors.white,
@@ -167,62 +195,77 @@ class _HomePageState extends State<HomePage> {
 
             // List
             Expanded(
-              child: favouriteStocks.isNotEmpty
-                  ? ListView.separated(
-                      itemCount: favouriteStocks.length,
-                      separatorBuilder: (context, index) => const Divider(),
-                      itemBuilder: (context, index) {
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.pushNamed(context, "/stockpage",
-                                arguments: favouriteStocks[index]);
-                          },
-                          child: SizedBox(
-                            height: 40,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  favouriteStocks[index]['sc_name'],
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                                IconButton(
-                                  onPressed: () => removeFromFavourite(
-                                      favouriteStocks[index]['sc_code']),
-                                  icon: Icon(
-                                    Icons.delete,
-                                    color:
-                                        Theme.of(context).colorScheme.onPrimary,
+              child: store.state.isLoading == true && !store.state.isLoggedIn
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        color: Theme.of(context).colorScheme.onSecondary,
+                      ),
+                    )
+                  : favouriteStocks.isNotEmpty
+                      ? Container(
+                          margin: const EdgeInsets.only(top: 10.0),
+                          child: ListView.separated(
+                            itemCount: favouriteStocks.length,
+                            separatorBuilder: (context, index) =>
+                                const Divider(),
+                            itemBuilder: (context, index) {
+                              return GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () {
+                                  Navigator.pushNamed(context, "/stockpage",
+                                      arguments: favouriteStocks[index]);
+                                },
+                                child: SizedBox(
+                                  height: 40,
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        favouriteStocks[index]['sc_name'],
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium,
+                                      ),
+                                      IconButton(
+                                        onPressed: () => removeFromFavourite(
+                                            favouriteStocks[index]['sc_code']),
+                                        icon: Icon(
+                                          Icons.delete,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onPrimary,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ],
-                            ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    )
-                  : SizedBox(
-                      height: MediaQuery.of(context).size.height,
-                      width: MediaQuery.of(context).size.width,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            "Nothing here",
-                            style: Theme.of(context).textTheme.titleMedium,
+                        )
+                      : SizedBox(
+                          height: MediaQuery.of(context).size.height,
+                          width: MediaQuery.of(context).size.width,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                "Nothing here",
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              Text(
+                                "Use the search bar to add stocks to",
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                              Text(
+                                "your favourites' list",
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ],
                           ),
-                          Text(
-                            "Use the search bar to add stocks to",
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                          Text(
-                            "your favourites' list",
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ],
-                      ),
-                    ),
+                        ),
             ),
           ],
         ),

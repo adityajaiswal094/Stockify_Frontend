@@ -5,7 +5,7 @@ class CustomTextFormField extends StatelessWidget {
   final String hintText;
   final TextInputType? keyboardType;
   final bool? obscureText;
-  final Function validationFunc;
+  final String? Function(String?)? validator;
 
   const CustomTextFormField({
     super.key,
@@ -13,7 +13,7 @@ class CustomTextFormField extends StatelessWidget {
     required this.hintText,
     this.keyboardType,
     this.obscureText,
-    required this.validationFunc,
+    required this.validator,
   });
 
   @override
@@ -37,12 +37,7 @@ class CustomTextFormField extends StatelessWidget {
             filled: true,
           ),
           style: Theme.of(context).textTheme.bodyMedium,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return "Required Field!";
-            }
-            return null;
-          },
+          validator: validator,
         ),
 
         //

@@ -1,7 +1,8 @@
-// ignore_for_file: non_constant_identifier_names
+// ignore_for_file: non_constant_identifier_names, avoid_print
 
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:stockify/store/store.dart';
 import '../utils/constants.dart' as constants;
 
 class StockTile extends StatefulWidget {
@@ -15,8 +16,9 @@ class StockTile extends StatefulWidget {
 class _StockTileState extends State<StockTile> {
   //
   bool addedToFavourite = false;
+  final userId = store.state.user['user_id'];
 
-  void addToFavourite(String sc_code) async {
+  Future<void> addToFavourite(String sc_code) async {
     final url = "${constants.baseUrl}/stocks/favourite/$sc_code";
 
     try {
@@ -25,7 +27,7 @@ class _StockTileState extends State<StockTile> {
       await dio.post(
         url,
         options: Options(
-          headers: {"user_id": 1},
+          headers: {"user_id": userId},
           followRedirects: false,
           validateStatus: (status) {
             return status! <= 500;
@@ -40,11 +42,14 @@ class _StockTileState extends State<StockTile> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () {
+        FocusManager.instance.primaryFocus?.unfocus();
         Navigator.pushNamed(context, "/stockpage", arguments: widget.stock);
       },
       child: SizedBox(
         height: 40,
+        width: MediaQuery.of(context).size.width,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -61,7 +66,7 @@ class _StockTileState extends State<StockTile> {
                       addToFavourite(widget.stock['sc_code']);
                     }
                   : null,
-              icon: addedToFavourite == true
+              icon: addedToFavourite == true || widget.stock['isFavourite']
                   ? Icon(
                       Icons.check_box,
                       color: Theme.of(context).colorScheme.onPrimary,

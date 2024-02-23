@@ -1,6 +1,10 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter/material.dart';
 import 'package:stockify/components/custom_button.dart';
 import 'package:stockify/components/custom_textformfield.dart';
+import 'package:stockify/store/store.dart';
+import 'package:stockify/store/user_reducer.dart';
 import 'package:stockify/utils/helper.dart';
 import '../utils/constants.dart' as constants;
 import 'package:dio/dio.dart';
@@ -17,11 +21,12 @@ class _UserLoginState extends State<UserLogin> {
   TextEditingController passwordController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
+  // List<dynamic> favouriteStocks = [];
 
-  void signIn() async {
+  Future<void> signIn() async {
     if (_formKey.currentState!.validate()) {
-      // show proper error message in dialog box for password not matching
-      // the error message which will be returned by api response
+      // store.dispatch(
+      //     const LoadingAction(payload: {"isError": false, "isLoading": true}));
       try {
         const url = "${constants.baseUrl}/login";
 
@@ -41,12 +46,17 @@ class _UserLoginState extends State<UserLogin> {
               },
             ));
 
-        Map<String, dynamic> responseBody = response.data;
+        var responseBody = response.data;
 
         if (context.mounted) {
           if (response.statusCode == 200) {
-            Navigator.popAndPushNamed(context, "/homepage");
+            Navigator.of(context).pushReplacementNamed("/homepage");
+
+            store
+                .dispatch(UserLoggedInAction(payload: responseBody['details']));
           } else {
+            // store.dispatch(const ErrorAction(
+            //     payload: {"isError": true, "isLoading": false}));
             showDialogMessage(
                 context, responseBody['title'], responseBody['message']);
           }
@@ -55,6 +65,13 @@ class _UserLoginState extends State<UserLogin> {
         print(e);
       }
     }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    emailController.dispose();
+    passwordController.dispose();
   }
 
   @override
@@ -79,7 +96,15 @@ class _UserLoginState extends State<UserLogin> {
                           controller: emailController,
                           hintText: "Enter email",
                           keyboardType: TextInputType.emailAddress,
-                          validationFunc: () {},
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Field cannot be empty";
+                            } else if (!RegExp(r'^[\w-\.]+@([\w]+\.)+[\w]{2,4}')
+                                .hasMatch(value)) {
+                              return "Enter correct email";
+                            }
+                            return null;
+                          },
                         ),
 
                         //
@@ -87,7 +112,12 @@ class _UserLoginState extends State<UserLogin> {
                           controller: passwordController,
                           hintText: "Enter password",
                           obscureText: true,
-                          validationFunc: () {},
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Field cannot be empty";
+                            }
+                            return null;
+                          },
                         ),
 
                         //
@@ -117,7 +147,7 @@ class _UserLoginState extends State<UserLogin> {
 
                             //
                             GestureDetector(
-                              onTap: () => Navigator.popAndPushNamed(
+                              onTap: () => Navigator.pushReplacementNamed(
                                   context, "/register"),
                               child: Text(
                                 "Sign Up",

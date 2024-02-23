@@ -1,8 +1,12 @@
+// ignore_for_file: avoid_print
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:stockify/components/stock_tile.dart';
 import 'package:dio/dio.dart';
+import 'package:stockify/store/store.dart';
+// import 'package:stockify/store/store.dart';
 import '../utils/constants.dart' as constants;
 
 class SearchPage extends StatefulWidget {
@@ -20,6 +24,8 @@ class _SearchPageState extends State<SearchPage> {
 
   bool showClearButton = false;
 
+  final userId = store.state.user['user_id'];
+
   @override
   void dispose() {
     searchTextController.dispose();
@@ -27,7 +33,7 @@ class _SearchPageState extends State<SearchPage> {
     super.dispose();
   }
 
-  void searchStock() async {
+  Future<void> searchStock() async {
     final value = searchTextController.text;
     final url = "${constants.baseUrl}/stocks?name=$value";
 
@@ -36,6 +42,7 @@ class _SearchPageState extends State<SearchPage> {
 
       final response = await dio.get(url,
           options: Options(
+            headers: {'user_id': userId},
             followRedirects: false,
             validateStatus: (status) {
               return status! <= 500;
@@ -53,6 +60,7 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: Theme.of(context).colorScheme.primary,
       appBar: AppBar(
         elevation: 0,

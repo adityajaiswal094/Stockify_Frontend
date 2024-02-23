@@ -30,12 +30,12 @@ class _StockPageState extends State<StockPage> {
   Widget build(BuildContext context) {
     final stockDetails = ModalRoute.of(context)!.settings.arguments! as Map;
 
-    void getStockHistory() async {
+    Future<void> getStockHistory() async {
       const url = "${constants.baseUrl}/stocks/history";
       final dio = Dio();
 
       final body = {
-        'name': stockDetails['sc_name'],
+        'name': stockDetails['sc_name'].trim(),
         'from': startDate,
         'to': endDate
       };
@@ -52,8 +52,6 @@ class _StockPageState extends State<StockPage> {
 
         var data = await response.data;
 
-        // print(response.data);
-
         setState(() {
           stockHistoryDetails = data.length != 0 ? data[0] : {};
 
@@ -68,11 +66,6 @@ class _StockPageState extends State<StockPage> {
             if (maxX == null || date.isAfter(maxX!)) maxX = date;
           }
         });
-
-        // stockHistoryDetails['data'].asMap().forEach(
-        //       (index, ele) =>
-        //           print("Index: $index, Close Value: ${ele['close']}"),
-        //     );
       } catch (e) {
         print(e);
       }
@@ -92,7 +85,7 @@ class _StockPageState extends State<StockPage> {
           ),
         ),
         title: Text(
-          stockDetails['sc_name'],
+          stockDetails['sc_name'].trim(),
           style: Theme.of(context).textTheme.titleMedium,
         ),
       ),

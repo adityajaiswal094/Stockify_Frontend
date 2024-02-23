@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter/material.dart';
 import 'package:stockify/components/custom_button.dart';
 import 'package:stockify/components/custom_textformfield.dart';
@@ -21,54 +23,53 @@ class _UserRegistrationState extends State<UserRegistration> {
 
   final _formKey = GlobalKey<FormState>();
 
-  void signUp() async {
+  Future<void> signUp() async {
     if (_formKey.currentState!.validate()) {
-      // check if passwords match
-      if (passwordController.text == confirmPasswordController.text) {
-        // if passwords match then make api call
-        try {
-          const url = "${constants.baseUrl}/register";
+      try {
+        const url = "${constants.baseUrl}/register";
 
-          final body = {
-            "first_name": firstNameController.text,
-            "last_name": lastNameController.text,
-            "email_id": emailController.text,
-            "password": passwordController.text
-          };
+        final body = {
+          "first_name": firstNameController.text,
+          "last_name": lastNameController.text,
+          "email_id": emailController.text,
+          "password": passwordController.text
+        };
 
-          final dio = Dio();
+        final dio = Dio();
 
-          final response = await dio.post(url,
-              data: body,
-              options: Options(
-                followRedirects: false,
-                validateStatus: (status) {
-                  return status! <= 500;
-                },
-              ));
+        final response = await dio.post(url,
+            data: body,
+            options: Options(
+              followRedirects: false,
+              validateStatus: (status) {
+                return status! <= 500;
+              },
+            ));
 
-          Map<String, dynamic> responseBody = response.data;
+        Map<String, dynamic> responseBody = response.data;
 
-          if (context.mounted) {
-            if (response.statusCode == 201) {
-              Navigator.popAndPushNamed(context, "/signin");
-              // ScaffoldMessenger.of(context).showSnackBar(
-              //   SnackBar(
-              //     content: Text(responseBody['title']),
-              //   ),
-              // );
-            } else {
-              showDialogMessage(
-                  context, responseBody['title'], responseBody['message']);
-            }
+        if (context.mounted) {
+          if (response.statusCode == 201) {
+            Navigator.of(context).pushReplacementNamed("/signin");
+          } else {
+            showDialogMessage(
+                context, responseBody['title'], responseBody['message']);
           }
-        } catch (e) {
-          print(e);
         }
-      } else {
-        showDialogMessage(context, "Error", "Passwords Don't Match");
+      } catch (e) {
+        print(e);
       }
     }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    firstNameController.dispose();
+    lastNameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
   }
 
   @override
@@ -91,14 +92,30 @@ class _UserRegistrationState extends State<UserRegistration> {
                         CustomTextFormField(
                           controller: firstNameController,
                           hintText: "Enter first name",
-                          validationFunc: () {},
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Field cannot be empty";
+                            } else if (!RegExp(r'^[a-z A-Z]+$')
+                                .hasMatch(value)) {
+                              return "Invalid name";
+                            }
+                            return null;
+                          },
                         ),
 
                         //
                         CustomTextFormField(
                           controller: lastNameController,
                           hintText: "Enter last name",
-                          validationFunc: () {},
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Field cannot be empty";
+                            } else if (!RegExp(r'^[a-z A-Z]+$')
+                                .hasMatch(value)) {
+                              return "Invalid name";
+                            }
+                            return null;
+                          },
                         ),
 
                         //
@@ -106,7 +123,15 @@ class _UserRegistrationState extends State<UserRegistration> {
                           controller: emailController,
                           hintText: "Enter email",
                           keyboardType: TextInputType.emailAddress,
-                          validationFunc: () {},
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Field cannot be empty";
+                            } else if (!RegExp(r'^[\w-\.]+@([\w]+\.)+[\w]{2,5}')
+                                .hasMatch(value)) {
+                              return "Invalid email";
+                            }
+                            return null;
+                          },
                         ),
 
                         //
@@ -114,7 +139,12 @@ class _UserRegistrationState extends State<UserRegistration> {
                           controller: passwordController,
                           hintText: "Enter password",
                           obscureText: true,
-                          validationFunc: () {},
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Field cannot be empty";
+                            }
+                            return null;
+                          },
                         ),
 
                         //
@@ -122,7 +152,15 @@ class _UserRegistrationState extends State<UserRegistration> {
                           controller: confirmPasswordController,
                           hintText: "Re-enter password",
                           obscureText: true,
-                          validationFunc: () {},
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Field cannot be empty";
+                            } else if (confirmPasswordController.text !=
+                                passwordController.text) {
+                              return "Passwords don't match";
+                            }
+                            return null;
+                          },
                         ),
 
                         //
@@ -145,8 +183,8 @@ class _UserRegistrationState extends State<UserRegistration> {
                             Text("Have an account? ",
                                 style: Theme.of(context).textTheme.bodyMedium),
                             GestureDetector(
-                              onTap: () =>
-                                  Navigator.popAndPushNamed(context, "/signin"),
+                              onTap: () => Navigator.pushReplacementNamed(
+                                  context, "/signin"),
                               child: Text(
                                 "Sign In",
                                 style: Theme.of(context)
