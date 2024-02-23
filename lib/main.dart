@@ -63,8 +63,8 @@ class MyApp extends StatelessWidget {
         ),
         // home: const UserRegistration(),
         routes: {
-          "/": (context) =>
-              StoreBuilder<UserState>(builder: (context, store) => AuthPage()),
+          "/": (context) => StoreBuilder<UserState>(
+              builder: (context, store) => const AuthPage()),
           "/homepage": (context) => StoreBuilder<UserState>(
               builder: (context, store) => const HomePage()),
           "/stockpage": (context) => StoreBuilder<UserState>(

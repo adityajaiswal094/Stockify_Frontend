@@ -1,6 +1,9 @@
 // ignore_for_file: avoid_print
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stockify/components/custom_button.dart';
 import 'package:stockify/components/custom_textformfield.dart';
 import 'package:stockify/store/store.dart';
@@ -22,6 +25,11 @@ class _UserLoginState extends State<UserLogin> {
 
   final _formKey = GlobalKey<FormState>();
   // List<dynamic> favouriteStocks = [];
+
+  Future<void> keepLoggedIn(String userData) async {
+    final sharedPreferences = await SharedPreferences.getInstance();
+    sharedPreferences.setString('userData', userData);
+  }
 
   Future<void> signIn() async {
     if (_formKey.currentState!.validate()) {
@@ -52,8 +60,12 @@ class _UserLoginState extends State<UserLogin> {
           if (response.statusCode == 200) {
             Navigator.of(context).pushReplacementNamed("/homepage");
 
-            store
-                .dispatch(UserLoggedInAction(payload: responseBody['details']));
+            store.dispatch(
+              UserLoggedInAction(payload: responseBody['details']),
+            );
+
+            //
+            keepLoggedIn(jsonEncode(responseBody['details']));
           } else {
             // store.dispatch(const ErrorAction(
             //     payload: {"isError": true, "isLoading": false}));
@@ -128,7 +140,9 @@ class _UserLoginState extends State<UserLogin> {
                         //
                         CustomButton(
                           buttonText: "Sign In",
-                          onPressed: signIn,
+                          onPressed: () {
+                            signIn();
+                          },
                           height: MediaQuery.of(context).size.width / 6,
                           width: MediaQuery.of(context).size.width,
                         ),

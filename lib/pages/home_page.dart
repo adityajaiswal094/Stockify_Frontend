@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stockify/store/store.dart';
 import 'package:stockify/store/user_reducer.dart';
 import 'package:stockify/utils/helper.dart';
@@ -27,6 +28,9 @@ class _HomePageState extends State<HomePage> {
   Future<void> getFavStocks() async {
     const url = "${constants.baseUrl}/stocks/favourites";
 
+    final sharedPreferences = await SharedPreferences.getInstance();
+    final userIdKey = sharedPreferences.getInt('userId');
+
     store.dispatch(
         const LoadingAction(payload: {"isError": false, "isLoading": true}));
     try {
@@ -35,7 +39,7 @@ class _HomePageState extends State<HomePage> {
       final response = await dio.get(
         url,
         options: Options(
-          headers: {'user_id': userId},
+          headers: {'user_id': userIdKey ?? userId},
           followRedirects: false,
           validateStatus: (status) {
             return status! <= 500;
@@ -124,9 +128,9 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void initState() {
-    super.initState();
-
     getFavStocks();
+
+    super.initState();
   }
 
   @override
@@ -141,7 +145,12 @@ class _HomePageState extends State<HomePage> {
         ),
         actions: [
           IconButton(
-            onPressed: () => signOut(userId),
+            onPressed: () async {
+              final sharedPreferences = await SharedPreferences.getInstance();
+              final userIdKey = sharedPreferences.getInt('userId');
+              signOut(userIdKey!);
+              sharedPreferences.clear();
+            },
             icon: const Icon(
               Icons.logout,
               color: Colors.white,
