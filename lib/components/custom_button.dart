@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stockify/components/custom_text.dart';
 
 class CustomButton extends StatelessWidget {
   final String buttonText;
@@ -24,16 +25,15 @@ class CustomButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor ?? Theme.of(context).colorScheme.onSecondary,
+          backgroundColor:
+              backgroundColor ?? Theme.of(context).colorScheme.onSecondary,
           foregroundColor: Colors.white,
           textStyle: Theme.of(context).textTheme.titleSmall,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
         ),
-        child: Text(
-          buttonText,
-        ),
+        child: CustomText(text: buttonText),
       ),
     );
   }

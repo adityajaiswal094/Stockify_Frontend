@@ -16,18 +16,18 @@ class AuthPage extends StatefulWidget {
 }
 
 class _AuthPageState extends State<AuthPage> {
-  String user = "";
+  String? user;
 
 // check for loggedIn
   Future<void> checkUserLoggedIn() async {
     final sharedPreferences = await SharedPreferences.getInstance();
     final userData = sharedPreferences.getString('userData');
     setState(() {
-      user = userData!;
+      user = userData;
     });
     store.dispatch(
       UserLoggedInAction(
-        payload: jsonEncode(userData) as Map<String, dynamic>,
+        payload: jsonDecode(userData ?? "{}") as Map<String, dynamic>,
       ),
     );
   }
@@ -40,6 +40,6 @@ class _AuthPageState extends State<AuthPage> {
 
   @override
   Widget build(BuildContext context) {
-    return user.isNotEmpty ? const HomePage() : const UserLogin();
+    return user != null ? const HomePage() : const UserLogin();
   }
 }

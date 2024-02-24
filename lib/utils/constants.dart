@@ -1,4 +1,4 @@
-const String baseUrl = "http://10.0.2.2:21222";
+const String baseUrl = "https://stocks-dvch.onrender.com";
 
 // error messages
 const String userNotFound = "User Not Found";

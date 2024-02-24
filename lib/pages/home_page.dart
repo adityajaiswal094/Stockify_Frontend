@@ -91,6 +91,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> signOut(int userId) async {
     const url = "${constants.baseUrl}/logout";
+    final sharedPreferences = await SharedPreferences.getInstance();
 
     try {
       final dio = Dio();
@@ -116,6 +117,7 @@ class _HomePageState extends State<HomePage> {
           store.dispatch(UserLoggedOutAction());
           Navigator.pushNamedAndRemoveUntil(
               context, "/signin", ((Route<dynamic> route) => false));
+          await sharedPreferences.remove('userData');
         } else {
           showDialogMessage(
               context, responseBody['title'], responseBody['message']);
@@ -145,11 +147,8 @@ class _HomePageState extends State<HomePage> {
         ),
         actions: [
           IconButton(
-            onPressed: () async {
-              final sharedPreferences = await SharedPreferences.getInstance();
-              // final userIdKey = sharedPreferences.getInt('userId');
+            onPressed: () {
               signOut(userId);
-              await sharedPreferences.clear();
             },
             icon: const Icon(
               Icons.logout,
